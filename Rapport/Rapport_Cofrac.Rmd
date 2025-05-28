@@ -1,0 +1,117 @@
+---
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(DT)
+
+source(file="../R/Seee_to_dataframe.R", encoding ="UTF-8")
+
+
+knitr::opts_chunk$set(echo = F)
+```
+```{r logos,warning=FALSE}
+htmltools::includeHTML("Pageentetesimple.html")
+
+```
+
+### rapport numéro 2025-XX-**
+```{r version,warning=FALSE,echo=FALSE,comment=NA}
+paste('rapport N° ',format(Sys.Date(),'%Y'),'--')
+
+```
+
+
+# Détail des actions correctives
+
+si document initial préciser
+document initial-RAS    
+sinon :
+remplace et corrge le rapport 20XX-YY  
+nature des corrections :
+
+
+# Méthodes & Matériel
+
+PEUPLEMENT  DE DIATOMEES D'EAU DOUCE  
+Etablissement d'une liste floristique de diatomées benthiques
+
+Méthodes d’essai:NF T90-354 (Avril 2016)  
+
+
+Conservation des échantillons  : Alcool 90°minimum    
+Microscope olympus BX53 pour la détermination  
+
+Résultats d'analyses rendus sous le couvert de l'agrément du ministère chargé de l'environnement dans les conditions de l'arrêté du 26 juin 2023  
+
+# Listes floristiques
+contenues dans le(s) fichier(s) suivants :
+```{r liste fichiers, echo=F}
+Liste_fichiers <-  list.files("../Exports/",pattern="txt",full.names=F)
+print(Liste_fichiers)
+
+```
+
+# Echantillons soumis à essai
+Données station fournies par le client (code station et libellé)
+
+```{r stations et opérateurs,echo=FALSE,message=FALSE,warning=FALSE}
+Liste_fichiers <-  list.files("../Data/",pattern="xlsx",full.names=TRUE)
+iEN64 <- which(str_detect(Liste_fichiers,"EN64"))
+EN64 <- Liste_fichiers[iEN64]
+#automatiser pour trouver la sheet qui contient "DIAT"
+Feuilles <- readxl::excel_sheets(EN64)
+ifeuille <- which(str_detect(Feuilles,"DIAT"))
+
+
+DFbrut <- readxl::read_xlsx(EN64,sheet=ifeuille) %>% slice(-1) %>% select(2,3,4,5,10,13)
+#renommer les colonnes
+colnames(DFbrut) <- c("CDSTATION","LIBELLE","DATEAMODIFIER","PRELEVEUR","MONTAGE_LAME","DETERMINATION")
+DFbrut <- select(DFbrut,1,2,3,6,4,5) %>% filter(!is.na(DATEAMODIFIER))
+
+#reformater les dates
+DFbrut <- DFbrut %>% 
+    rowwise() %>% 
+    mutate(DATE_PREL=as.Date(ifelse(grepl("\\.",DATEAMODIFIER),
+                                   as.character(dmy(DATEAMODIFIER)),
+                                   as.character(as.Date(as.numeric(DATEAMODIFIER) ,origin="1899-12-30"))))) %>% 
+    ungroup()
+#DATEPREL dans le format Francais
+# on ne selectionne que les dates existantes (sur dat-NA ca ne marche pas)
+#DFbrut <- select(DFbrut,1,2,7,4,5,6)
+DFbrut <- select(DFbrut,1,2,7,5,4)
+datatable(filter(DFbrut,!is.na(PRELEVEUR)),options =
+            list(pageLength = 100,
+                  iDisplayLength=6,
+                  bPaginate=FALSE,                  
+                  bLengthChange=FALSE,                       
+                  bFilter=FALSE ,                                   
+                  bInfo=FALSE,
+                  rowid = FALSE,
+                  autoWidth = FALSE,
+                 ordering = FALSE,
+                  scrollX = TRUE,
+                  borders = TRUE,
+                 columnDefs = list(list(className = 'dt-center', targets ="_all"))
+                 ),rownames=FALSE#enlever le numero des lignes
+          )
+
+
+```
+LD : Lucie Dalibard  
+YMH : Yves-Marie Heno
+
+# Validation
+
+Emission du rapport  le
+````{r date,echo=FALSE}
+format(Sys.time(), "%a %e %b %Y")
+
+````
+Fichiers déposés sur la plateforme de l'agence https://depot-donnees-osur.eau-loire-bretagne.fr/
+  
+Emission autorisée par le RL (YMH)  
+
+
